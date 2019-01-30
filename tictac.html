@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>The HTML5 Herald</title>
+  <style>
+    #center {
+      height: 300px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    body {
+      background-color: lightgrey;
+    }
+    line {
+      stroke: black;
+    }
+    #sec {
+      transition: x2 1s y2 1s;
+      stroke-width: 4px;
+    }
+    #min {
+      stroke-width: 6px;
+    }
+    #h {
+      stroke-width: 8px;
+    }
+    #hours {
+      stroke: black;
+      stroke-width: 20px;
+      fill: none;
+      stroke-dasharray: 1 51.35;
+      stroke-dashoffset: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="center" style="">
+    <svg height="300" width="300">
+      <circle r="140" cx="150" cy="150" fill="black"/>
+      <circle r="120" cx="150" cy="150" fill="steelblue"/>
+      <line id="sec" x1="150" y1="150" x2="150" y2="50"/>
+      <line id="min" x1="150" y1="150" x2="240" y2="150"/>
+      <line id="h" x1="150" y1="150" x2="150" y2="200"/>
+      <circle r="4" cx="150" cy="150" fill="black"/>
+      <circle id="hours" r="100" cx="150" cy="150"/>
+    </svg>
+  </div>
+
+  <script>
+
+    var secDuration = 1000;
+    var running = true;
+
+    var sec = {
+      counter: 0,
+      origX: 150,
+      origY: 150,
+      r: 100,
+      angleInc: 6,
+      increments: 60,
+      id: 'sec',
+    }
+    var min = {
+      counter: 0,
+      origX: 150,
+      origY: 150,
+      r: 90,
+      angleInc: 6,
+      increments: 60,
+      id: 'min',
+    }
+    var h = {
+      counter: 0,
+      origX: 150,
+      origY: 150,
+      r: 50,
+      angleInc: 30,
+      increments: 12,
+      id: 'h',
+    }
+
+    var tic = function() {
+      sec.counter ++;
+      if (sec.counter === 60) {
+        updateMin();
+        sec.counter = 0;
+      }
+      // wait one second to next Tic
+      var pos = sec.counter;
+      updatePosition(sec, pos);
+      if (running) {
+        window.setTimeout(tic, secDuration);
+      }
+    }
+
+    function updateMin() {
+      min.counter ++;
+      if (min.counter === 60) {
+        updateH();
+        min.counter = 0;
+      }
+      var pos = min.counter;
+      updatePosition(min, pos);
+    }
+
+    function updateH() {
+      h.counter ++;
+      if (h.counter === 12) {h.counter = 0;};
+      var pos = h.counter;
+      updatePosition(h, pos);
+
+      // TODO: maybe compare with real time?
+    }
+    function updatePosition(element, pos) {
+      // ist um 90 Grad nach rechts gedreht, desgwen muss der viertel Kreis abgezogen werden
+      var newAngle = pos * (2 * Math.PI) / element.increments - (0.5 * Math.PI);
+      // cos braucht radians!
+      x2 = element.origX + element.r * Math.cos(newAngle);
+      y2 = element.origY + element.r * Math.sin(newAngle);
+      var domElem = document.getElementById(element.id)
+      domElem.setAttribute('x2', x2);
+      domElem.setAttribute('y2', y2);
+    }
+
+    var setTime = function () {
+      var date = new Date();
+      sec.counter = date.getSeconds();
+      min.counter = date.getMinutes();
+      h.counter = date.getHours() % 12;
+
+      updatePosition(sec, sec.counter);
+      updatePosition(min, min.counter);
+      updatePosition(h, h.counter);
+
+      // start Clock after first Second passes
+      window.setTimeout(tic, secDuration);
+    }
+
+
+    document.addEventListener("DOMContentLoaded", setTime);
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'hidden') {
+        running = false;
+      } else if (document.visibilityState === 'visible') {
+        running = true;
+        setTime();
+      }
+    });
+
+    // TODO: animate Transitions between Positions
+    // SMIL ? https://css-tricks.com/guide-svg-animations-smil/
+    // CSS Rotation for min and h? Only if transition can be aborted
+    // vielleicht auch nur kleinere Schritte für die Stunden? z.B. alle 10 Minuten weiterbewegen oder so
+  </script>
+</body>
+</html>
+
